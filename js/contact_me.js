@@ -51,7 +51,7 @@ $(function() {
                     $('#success > .alert-danger').append('</div>');
                     //clear all fields
                     $('#contactForm').trigger("reset");
-                },
+                }
             });
         },
         filter: function() {

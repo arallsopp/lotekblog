@@ -9,10 +9,13 @@ class pageConstructor {
     private $db;
     private $mode;
     private $postDetails;
-    private $allowEdit = false;
+    private $loggedIn = false;
+
+    private $userid;
+    private $userAlias;
 
     function __construct(){
-        $this->db = mysqli_connect("localhost", "root", "root", "lotek");
+        $this->db = $this->getConnection();
 
         if (!$this->db) {
             echo "Error: Unable to connect to MySQL." . PHP_EOL;
@@ -21,7 +24,15 @@ class pageConstructor {
             exit;
         }
 
-        $this->allowEdit = (isset($_GET['pass']) && $_GET['pass'] == 'alphab3ta');
+
+        $this->loggedIn = isset($_SESSION['userid']);
+        if($this->loggedIn){
+            $this->userid = $_SESSION['userid'];
+            $sql = 'SELECT * from users WHERE id = "' . $this->userid . '" LIMIT 1';
+            $result = mysqli_query($this->db,$sql);
+            $row = mysqli_fetch_array($result);
+            $this->userAlias = $row['alias'];
+        }
 
         if(isset($_GET['mode'])){
             $this->mode = $_GET['mode'];
@@ -38,7 +49,14 @@ class pageConstructor {
     }
 
     // method declaration
+    public function isLoggedIn(){
+        return $this->loggedIn;
+    }
 
+    public function getConnection(){
+        $conn = new mysqli("localhost", "root", "root", "lotek");
+        return $conn;
+    }
     public function buildHead(){?>
         <head>
 
@@ -88,6 +106,11 @@ class pageConstructor {
                         <li>
                             <a href="index.php">Home</a>
                         </li>
+                        <?php if($this->loggedIn){ ?>
+                            <li>
+                                <a href="administer.php">Administer</a>
+                            </li>
+                        <?php } ?>
                         <li>
                             <a href="index.php?mode=about">About</a>
                         </li>
@@ -332,7 +355,13 @@ class pageConstructor {
                             </li>
 
                         </ul>
-                        <p class="copyright text-muted">Copyright &copy; Lotek 2016</p>
+                        <p class="copyright text-muted">Copyright &copy; Lotek 2016 | <?php
+                        if($this->loggedIn){?>
+                            <span class="trigger trigger-logout">Logout</span>
+                        <?php }else{ ?>
+                            <span class="trigger trigger-login">Login</span> <?php
+                        }
+                        ?></p>
                     </div>
                 </div>
             </div>
@@ -352,8 +381,11 @@ class pageConstructor {
         <!-- Theme JavaScript -->
         <script src="js/clean-blog.min.js"></script>
 
+        <!-- Additions -->
+        <script src="js/custom.js"></script>
+
         <?php
-        if($this->allowEdit){?>
+        if($this->loggedIn){?>
         <script>
             $(document).ready(function(){
 
@@ -371,10 +403,9 @@ class pageConstructor {
                         url: "inlineupdate.php",
                         type: "POST",
                         data: {
-                            id : <?php echo $_GET['id'];?>,
-                            pass: "<?php echo $_GET['pass'];?>",
                             column : "bodycontent",
-                            content : $('.content').html()
+                            content : $('.content').html(),
+                            id : "<?php echo $this->postDetails['postid'];?>"
                             },
                         dataType: "html",
                         success: function(r){
@@ -386,6 +417,21 @@ class pageConstructor {
             }
         </script>
         <?php }
+    }
+
+    public function validateUser($email,$pass){
+        $sql = 'SELECT * from users WHERE emailaddress = "' . $email . '" AND pass = "' . MD5($pass) . '" LIMIT 1';
+
+        $result = mysqli_query($this->db,$sql);
+        while($row = mysqli_fetch_array($result)){
+            $_SESSION['userid']  = $row['id'];
+            $_SESSION['alias'] = $row['alias'];
+            return true;
+        }
+        return false;
+    }
+    public function logoutUser(){
+        unset($_SESSION['userid']);
     }
 }
 
@@ -400,3 +446,4 @@ function curPageURL() {
     }
     return $pageURL;
 }
+
