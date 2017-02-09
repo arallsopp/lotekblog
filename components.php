@@ -108,7 +108,7 @@ class pageConstructor {
                         </li>
                         <?php if($this->loggedIn){ ?>
                             <li>
-                                <a href="administer.php">Administer</a>
+                                <a href="index.php?mode=admin">Administer</a>
                             </li>
                         <?php } ?>
                         <li>
@@ -125,6 +125,9 @@ class pageConstructor {
         </nav>
     <?php }
 
+    /**
+     *
+     */
     public function buildHeader(){
         switch($this->mode){
 
@@ -182,8 +185,12 @@ class pageConstructor {
             <?php
             break;
 
-            default:
-            ?>
+            case 'admin': ?>
+                <header style="background-image: url('img/contact-bg.jpg'); height:54px"></header>
+            <?php
+            break;
+
+            default: ?>
             <!-- Blog Page Header -->
             <header class="intro-header" style="background-image: url('img/home-bg.jpg')">
                 <div class="container">
@@ -271,6 +278,56 @@ class pageConstructor {
                             <div class="row">
                                 <div class="form-group col-xs-12">
                                     <button type="submit" class="btn btn-default">Send</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <hr><?php
+        break;
+
+        case 'admin':?>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                        <p>Add Post</p>
+                          <form name="addPost" id="addPost" method="post" action="processor.php" novalidate>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Headline</label>
+                                    <input type="text" class="form-control" placeholder="Headline" id="headline" required data-validation-required-message="Please enter a headline for this post.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Subtitle</label>
+                                    <input type="text" class="form-control" placeholder="Subtitle" id="subtitle" required data-validation-required-message="Please enter a subtitle for this post.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Background Image</label>
+                                    <input type="file" class="form-control" placeholder="Background Image" id="backgroundimage" required data-validation-required-message="Please enter a background image.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Content</label>
+                                    <textarea rows="5" class="form-control" placeholder="Content" id="content" required data-validation-required-message="Please enter some content for this post."></textarea>
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <br>
+                            <div id="success"></div>
+                            <div class="row">
+                                <div class="form-group col-xs-12">
+                                    <input type="hidden" name="mode" value="createpost"/>
+                                    <button type="submit" class="btn btn-default">Add Post</button>
                                 </div>
                             </div>
                         </form>
@@ -400,9 +457,10 @@ class pageConstructor {
             function endEdit(){
                 if(confirm('update page')){
                     request = jQuery.ajax({
-                        url: "inlineupdate.php",
+                        url: "processor.php",
                         type: "POST",
                         data: {
+                            mode : "editinline",
                             column : "bodycontent",
                             content : $('.content').html(),
                             id : "<?php echo $this->postDetails['postid'];?>"
