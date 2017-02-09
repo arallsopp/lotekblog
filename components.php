@@ -41,7 +41,7 @@ class pageConstructor {
         }
 
         if ($this->mode=='viewpost' && isset($_GET['id'])){
-            $sql = 'SELECT * from posts p INNER JOIN postdetails d ON p.id = d.postid WHERE p.id="' . intval($_GET['id']) . '" AND published = TRUE LIMIT 1';
+            $sql = 'SELECT * from posts p INNER JOIN users u ON p.userid = u.id INNER JOIN postdetails d ON p.id = d.postid WHERE p.id="' . intval($_GET['id']) . '" AND published = TRUE LIMIT 1';
             $result = mysqli_query($this->db,$sql);
             $this->postDetails = mysqli_fetch_array($result);
         }
@@ -51,6 +51,12 @@ class pageConstructor {
     // method declaration
     public function isLoggedIn(){
         return $this->loggedIn;
+    }
+    public function getUserAlias(){
+        return $this->userAlias;
+    }
+    public function getUserID(){
+        return $this->userid;
     }
 
     public function getConnection(){
@@ -140,7 +146,7 @@ class pageConstructor {
                             <div class="post-heading">
                                 <h1><?php echo $this->postDetails['headline'];?></h1>
                                 <h2 class="subheading"><?php echo $this->postDetails['subtitle'];?></h2>
-                                <span class="meta">Posted by <a href="?author=<?php echo $this->postDetails['author'];?>"><?php echo $this->postDetails['author'];?></a> on <?php echo $this->postDetails['date'];?></p></span>
+                                <span class="meta">Posted by <a href="?author=<?php echo $this->postDetails['alias'];?>"><?php echo $this->postDetails['alias'];?></a> on <?php echo $this->postDetails['date'];?></p></span>
                             </div>
                         </div>
                     </div>
@@ -216,7 +222,7 @@ class pageConstructor {
             <div class="container">
                 <div class="row">
                     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                        <div class="content"><?php echo $this->postDetails['bodycontent'];?></div>
+                        <div id="content" class="content"><?php echo $this->postDetails['bodycontent'];?></div>
                     </div>
                 </div>
             </div>
@@ -297,28 +303,28 @@ class pageConstructor {
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Headline</label>
-                                    <input type="text" class="form-control" placeholder="Headline" id="headline" required data-validation-required-message="Please enter a headline for this post.">
+                                    <input type="text" class="form-control" placeholder="Headline" name="headline" id="headline" required data-validation-required-message="Please enter a headline for this post.">
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Subtitle</label>
-                                    <input type="text" class="form-control" placeholder="Subtitle" id="subtitle" required data-validation-required-message="Please enter a subtitle for this post.">
+                                    <input type="text" class="form-control" placeholder="Subtitle" name="subtitle" id="subtitle" required data-validation-required-message="Please enter a subtitle for this post.">
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Background Image</label>
-                                    <input type="file" class="form-control" placeholder="Background Image" id="backgroundimage" required data-validation-required-message="Please enter a background image.">
+                                    <input type="file" class="form-control" placeholder="Background Image" name="backgroundimage" id="backgroundimage" required data-validation-required-message="Please enter a background image.">
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Content</label>
-                                    <textarea rows="5" class="form-control" placeholder="Content" id="content" required data-validation-required-message="Please enter some content for this post."></textarea>
+                                    <textarea rows="5" class="form-control" placeholder="Content" name="content" id="content" required data-validation-required-message="Please enter some content for this post."></textarea>
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
@@ -344,7 +350,7 @@ class pageConstructor {
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                         <?php
-                            $sql = 'SELECT * from posts WHERE published=TRUE ORDER by "date"';
+                            $sql = 'SELECT p.id, p.headline, p.subtitle, p.`date`, u.alias  from posts p INNER JOIN users u ON p.userid = u.id WHERE p.published=TRUE ORDER by "date"';
                             $result = mysqli_query($this->db,$sql);
                             while($row = mysqli_fetch_array($result)){
                             ?>
@@ -358,7 +364,7 @@ class pageConstructor {
                                 <?php echo $row['subtitle'];?>
                             </h3>
                         </a>
-                        <p class="post-meta">Posted by <a href="?author=<?php echo $row['author'];?>"><?php echo $row['author'];?></a> on <?php echo $row['date'];?></p>
+                        <p class="post-meta">Posted by <a href="?author=<?php echo $row['alias'];?>"><?php echo $row['alias'];?></a> on <?php echo $row['date'];?></p>
                     </div>
                                 <hr>
 
@@ -443,19 +449,71 @@ class pageConstructor {
 
         <?php
         if($this->loggedIn){?>
+            <!-- include codemirror for inline source view -->
+            <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/codemirror.css">
+            <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/theme/monokai.css">
+            <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/codemirror.js"></script>
+            <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/mode/xml/xml.js"></script>
+            <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/2.36.0/formatting.js"></script>
+
+            <!-- include summernote css/js-->
+            <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.2/summernote.css" rel="stylesheet">
+            <script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.2/summernote.js"></script>
+
         <script>
             $(document).ready(function(){
 
-                $('<button type="button"  onclick="beginEdit();">Edit</button>').insertBefore('.content');
-                $('<button type="button"  onclick="endEdit();">Save Changes</button>').insertBefore('.content');
+                $('<button id="startEdit" type="button"  onclick="startEdit();">Edit Post</button>').insertBefore('.content');
+                $('<button id="endEdit" style="display:none" type="button"  onclick="endEdit();">Save Changes</button>').insertBefore('.content');
+                $('<button type="button"  onclick="deletePost();">Delete post</button>').insertBefore('.content');
 
             });
-            function beginEdit(){
-                $('.content').attr('contenteditable', true)
+            function deletePost(){
+                if(confirm('Delete this post?')){
+                    request = jQuery.ajax({
+                        url: "processor.php",
+                        type: "POST",
+                        data: {
+                            mode : "deletepost",
+                            id : "<?php echo $this->postDetails['postid'];?>"
+                        },
+                        dataType: "json",
+                        success: function(r){
+                            console.log(r);
+                            window.location.href = 'index.php';
+                        }
+                    });
+
+                }
             }
 
+            function startEdit(){
+                $('.content').summernote({
+                    airMode: true,
+                    popover: {
+                        air: [
+
+                            ['font', ['style','bold', 'italic', 'clear']],
+                            ['para', ['ul', 'paragraph']],
+                            ['table', ['table']],
+                            ['insert', ['link', 'picture']]
+                        ]
+                    }
+
+                });
+                $('#endEdit').toggle(true);
+                $('#startEdit').toggle(false);
+            }
             function endEdit(){
-                if(confirm('update page')){
+                $('#endEdit').toggle(false);
+                $('#startEdit').toggle(true);
+
+                var markup = $('.content').summernote('code');
+                $('.content').summernote('destroy');
+                console.log(markup);
+
+                if(confirm('Do you want to update this post?')){
+
                     request = jQuery.ajax({
                         url: "processor.php",
                         type: "POST",

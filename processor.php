@@ -41,18 +41,66 @@ switch($_POST['mode']){
     case 'createpost':
         $conn = $pageConstructor->getConnection();
 
-        $sql = 'select * from posts';
+        $headline = mysqli_real_escape_string($conn,$_POST['headline']);
+        $subtitle = mysqli_real_escape_string($conn,$_POST['subtitle']);
+        $content  = mysqli_real_escape_string($conn,$_POST['content']);
+        $backgroundimage = 'todo: store the file and link its location';
+
+        $published = 1;
+
+        $sql = 'INSERT INTO posts (headline,subtitle,userid,published)
+                VALUES ("' . $headline . '", "' . $subtitle . '","' . $pageConstructor->getUserID() . '",' . $published .')';
 
         if ($conn->query($sql) === TRUE) {
-            $obj = array('message' => 'Post added');
-        } else {
-            $obj = array('message' => 'Error adding record: ' . $conn->error);
+
+            //store the details
+            $postid = $conn->insert_id;
+            $sql = 'INSERT INTO postdetails (postid, bodycontent, backgroundimage)
+                    VALUES ("' . $postid . '","' . $content . '","' . $backgroundimage . '")';
+
+            if ($conn->query($sql) === TRUE) {
+                //we are all done. No problems.
+                header('location:index.php');
+                $conn->close();
+                exit;
+            }
         }
+
+        //if you're reaching here, there's a problem.
+        $obj = array('message' => 'Error adding record: ' . $conn->error,
+                     'sql'=>$sql,
+                     'post' => $_POST);
 
         $conn->close();
         break;
 
-    default:
+    case 'deletepost':
+        $conn = $pageConstructor->getConnection();
+
+        $postid = mysqli_real_escape_string($conn,$_POST['id']);
+
+        $sql = 'DELETE FROM posts WHERE id = "' . $postid . '"';
+
+        if( $conn->query($sql) !== true) {
+            $obj = array('message' => 'Error deleting post: ' . $conn->error,
+                'sql' => $sql,
+                'post' => $_POST);
+        }else{
+            $sql = 'DELETE FROM postdetails WHERE postid = "' . $postid . '"';
+
+            if ($conn->query($sql) === TRUE) {
+                $obj = array('message'=>'post has been deleted.');
+            }else {
+                $obj = array('message' => 'Error deleting post: ' . $conn->error,
+                    'sql' => $sql,
+                    'post' => $_POST);
+
+
+            }
+        }
+        break;
+
+            default:
         $obj = array('message'=>'Wasn\'t sure what you were trying to do there.',
                      'mode'=> (isset($_POST['mode'])
                                ? $_POST['mode']
