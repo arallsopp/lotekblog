@@ -38,6 +38,29 @@ switch($_POST['mode']){
         }
         break;
 
+    case 'imageupload':
+        if ($_FILES['file']['name']) {
+            if (!$_FILES['file']['error']) {
+                $name = md5(rand(100, 200));
+                $ext = explode('.', $_FILES['file']['name']);
+                $filename = $name . '.' . $ext[1];
+                $folder = 'img/uploads/';
+                if(!is_dir($folder)){
+                    mkdir($folder,0777,true);
+                }
+
+                $destination = $folder . $filename;
+                $location = $_FILES["file"]["tmp_name"];
+                move_uploaded_file($location, $destination);
+                $obj = array('uploaded' => true,
+                             'filepath' => $destination);
+            } else {
+                $obj = array('uploaded' => false,
+                             'error' => $_FILES['file']['error']);
+            }
+        }
+        break;
+
     case 'createpost':
         $conn = $pageConstructor->getConnection();
 

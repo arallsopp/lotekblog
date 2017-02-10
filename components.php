@@ -463,11 +463,33 @@ class pageConstructor {
         <script>
             $(document).ready(function(){
 
-                $('<button id="startEdit" type="button"  onclick="startEdit();">Edit Post</button>').insertBefore('.content');
-                $('<button id="endEdit" style="display:none" type="button"  onclick="endEdit();">Save Changes</button>').insertBefore('.content');
-                $('<button type="button"  onclick="deletePost();">Delete post</button>').insertBefore('.content');
+
+                $('<button id="startEdit" class="follow-scroll" type="button"  onclick="startEdit();">Edit Post</button>').insertBefore('.content');
+                $('<button id="endEdit" class="follow-scroll" style="display:none" type="button"  onclick="endEdit();">Save Changes</button>').insertBefore('.content');
+                $('<button type="button" class="follow-scroll" onclick="deletePost();">Delete post</button>').insertBefore('.content');
+                setupFollowScroll();
 
             });
+
+            function setupFollowScroll(){
+                var element = $('.follow-scroll'),
+                    originalY = element.offset().top;
+
+                var topMargin = 5;
+
+                element.css({"position":"relative","z-index":"10000"});
+
+                $(window).on('scroll', function() {
+                    var scrollTop = $(window).scrollTop();
+
+                    element.stop(false, false).animate({
+                        top: scrollTop < originalY
+                            ? 0
+                            : scrollTop - originalY + topMargin
+                    }, 300);
+                });
+            }
+
             function deletePost(){
                 if(confirm('Delete this post?')){
                     request = jQuery.ajax({
@@ -487,6 +509,25 @@ class pageConstructor {
                 }
             }
 
+            function sendFile(file) {
+                data = new FormData();
+                data.append("file", file);
+                data.append("mode",'imageupload');
+                $.ajax({
+                    data: data,
+                    type: "POST",
+                    url: "processor.php",
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function(obj) {
+                        $('.content').summernote('pasteHTML', '<img src="' + obj.filepath + '" class="img-responsive"/>');
+                    }
+
+                });
+            }
+
             function startEdit(){
                 $('.content').summernote({
                     airMode: true,
@@ -498,12 +539,18 @@ class pageConstructor {
                             ['table', ['table']],
                             ['insert', ['link', 'picture']]
                         ]
+                    },
+                    callbacks: {
+                        onImageUpload: function(files) {
+                            sendFile(files[0]);
+                        }
                     }
 
                 });
                 $('#endEdit').toggle(true);
                 $('#startEdit').toggle(false);
             }
+
             function endEdit(){
                 $('#endEdit').toggle(false);
                 $('#startEdit').toggle(true);
