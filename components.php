@@ -3,6 +3,7 @@ if (!isset($_SESSION)) session_start();
 
 ini_set('display_errors','on');
 error_reporting(E_ALL);
+include_once('conf/dbconfig.php');
 
 
 class pageConstructor {
@@ -60,7 +61,8 @@ class pageConstructor {
     }
 
     public function getConnection(){
-        $conn = new mysqli("localhost", "root", "root", "lotek");
+        $db_creds = new databaseCredentials();
+        $conn = new mysqli($db_creds->address,$db_creds->user,$db_creds->pass,$db_creds->schema);
         return $conn;
     }
     public function buildHead(){?>
