@@ -15,16 +15,17 @@ class pageConstructor {
     private $userid;
     private $userAlias;
 
-    function __construct(){
+    function __construct($debug = false){
+        debugOut('debug is ON',$debug);
+
+        debugOut('Making connection to database',$debug);
         $this->db = $this->getConnection();
 
         if (!$this->db) {
-            echo "Error: Unable to connect to MySQL." . PHP_EOL;
-            echo "Debugging errno: " . mysqli_connect_errno() . PHP_EOL;
-            echo "Debugging error: " . mysqli_connect_error() . PHP_EOL;
+            debugOut('Error: Unable to connect to MySQL.',true);
+            debugOut('Debugging errno: ' . mysqli_connect_errno(),true);
             exit;
         }
-
 
         $this->loggedIn = isset($_SESSION['userid']);
         if($this->loggedIn){
@@ -41,10 +42,13 @@ class pageConstructor {
             $this->mode = 'home';
         }
 
+        debugOut('Using mode: ' . $this->mode,$debug);
+
         if ($this->mode=='viewpost' && isset($_GET['id'])){
             $sql = 'SELECT * from posts p INNER JOIN users u ON p.userid = u.id INNER JOIN postdetails d ON p.id = d.postid WHERE p.id="' . intval($_GET['id']) . '" AND published = TRUE LIMIT 1';
             $result = mysqli_query($this->db,$sql);
             $this->postDetails = mysqli_fetch_array($result);
+            debugOut('loaded post details',$debug);
         }
 
     }
@@ -141,7 +145,7 @@ class pageConstructor {
 
             case 'viewpost':?>
             <!-- Post Page Header -->
-            <header class="intro-header" style="background-image: url('img/post-bg.jpg')">
+            <header class="intro-header" style="background-image: url('<?php echo $this->postDetails['backgroundimage'];?>')">
                 <div class="container">
                     <div class="row">
                         <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
@@ -301,7 +305,7 @@ class pageConstructor {
                 <div class="row">
                     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                         <p>Add Post</p>
-                          <form name="addPost" id="addPost" method="post" action="processor.php" novalidate>
+                          <form name="addPost" id="addPost" method="post" action="processor.php" enctype="multipart/form-data" novalidate>
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Headline</label>
@@ -319,7 +323,7 @@ class pageConstructor {
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Background Image</label>
-                                    <input type="file" class="form-control" placeholder="Background Image" name="backgroundimage" id="backgroundimage" required data-validation-required-message="Please enter a background image.">
+                                    <input type="file" class="form-control" placeholder="Background Image" name="file" id="file" required data-validation-required-message="Please enter a background image.">
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
@@ -612,3 +616,8 @@ function curPageURL() {
     return $pageURL;
 }
 
+function debugOut($msg,$debug){
+    if($debug){
+        echo PHP_EOL . $msg;
+    }
+}

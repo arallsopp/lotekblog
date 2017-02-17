@@ -1,6 +1,7 @@
 <?php
+$debug = false;
 require_once('components.php');
-$pageConstructor = new pageConstructor();
+$pageConstructor = new pageConstructor($debug);
 $obj = array();
 
 switch($_POST['mode']){
@@ -39,26 +40,7 @@ switch($_POST['mode']){
         break;
 
     case 'imageupload':
-        if ($_FILES['file']['name']) {
-            if (!$_FILES['file']['error']) {
-                $name = md5(rand(100, 200));
-                $ext = explode('.', $_FILES['file']['name']);
-                $filename = $name . '.' . $ext[1];
-                $folder = 'img/uploads/';
-                if(!is_dir($folder)){
-                    mkdir($folder,0777,true);
-                }
-
-                $destination = $folder . $filename;
-                $location = $_FILES["file"]["tmp_name"];
-                move_uploaded_file($location, $destination);
-                $obj = array('uploaded' => true,
-                             'filepath' => $destination);
-            } else {
-                $obj = array('uploaded' => false,
-                             'error' => $_FILES['file']['error']);
-            }
-        }
+        $obj=saveUploadedImage();
         break;
 
     case 'createpost':
@@ -67,8 +49,14 @@ switch($_POST['mode']){
         $headline = mysqli_real_escape_string($conn,$_POST['headline']);
         $subtitle = mysqli_real_escape_string($conn,$_POST['subtitle']);
         $content  = mysqli_real_escape_string($conn,$_POST['content']);
-        $backgroundimage = 'todo: store the file and link its location';
 
+        $obj=saveUploadedImage();
+
+        if($obj !== null && array_key_exists('filepath',$obj)){
+            $backgroundimage = $obj['filepath'];
+        }else{
+            $backgroundimage = 'img/post-bg.jpg';
+        }
         $published = 1;
 
         $sql = 'INSERT INTO posts (headline,subtitle,userid,published)
@@ -133,4 +121,26 @@ switch($_POST['mode']){
 }
 echo json_encode($obj);
 
+function saveUploadedImage(){
+    if (isset($_FILES['file']['name'])) {
+        if (!$_FILES['file']['error']) {
+            $name = md5(rand(100, 200));
+            $ext = explode('.', $_FILES['file']['name']);
+            $filename = $name . '.' . $ext[1];
+            $folder = 'img/uploads/';
+            if(!is_dir($folder)){
+                mkdir($folder,0777,true);
+            }
 
+            $destination = $folder . $filename;
+            $location = $_FILES["file"]["tmp_name"];
+            move_uploaded_file($location, $destination);
+            $obj = array('uploaded' => true,
+                'filepath' => $destination);
+        } else {
+            $obj = array('uploaded' => false,
+                'error' => $_FILES['file']['error']);
+        }
+        return $obj;
+    }
+}
