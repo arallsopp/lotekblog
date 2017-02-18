@@ -49,6 +49,7 @@ switch($_POST['mode']){
         $headline = mysqli_real_escape_string($conn,$_POST['headline']);
         $subtitle = mysqli_real_escape_string($conn,$_POST['subtitle']);
         $content  = mysqli_real_escape_string($conn,$_POST['content']);
+        $date = date('Y-m-d H:i:s',strtotime($_POST['date']));
 
         $obj=saveUploadedImage();
 
@@ -59,8 +60,8 @@ switch($_POST['mode']){
         }
         $published = 1;
 
-        $sql = 'INSERT INTO posts (headline,subtitle,userid,published)
-                VALUES ("' . $headline . '", "' . $subtitle . '","' . $pageConstructor->getUserID() . '",' . $published .')';
+        $sql = 'INSERT INTO posts (headline,date,subtitle,userid,published)
+                VALUES ("' . $headline . '", "' . $date . '", "' . $subtitle . '","' . $pageConstructor->getUserID() . '",' . $published .')';
 
         if ($conn->query($sql) === TRUE) {
 

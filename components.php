@@ -11,9 +11,12 @@ class pageConstructor {
     private $mode;
     private $postDetails;
     private $loggedIn = false;
-
     private $userid;
     private $userAlias;
+    private $page = 1;
+    private $posts_per_page = 6;
+    private $page_limit = 1;
+    private $post_start = 0;
 
     function __construct($debug = false){
         debugOut('debug is ON',$debug);
@@ -62,6 +65,16 @@ class pageConstructor {
     }
     public function getUserID(){
         return $this->userid;
+    }
+
+    private function setPageOffsets(){
+        if(isset($_GET['page'])){
+            $this->page = intval($_GET['page']);
+            $this->post_start = (($this->page)-1) * $this->posts_per_page;
+        }
+        if($this->post_start < 0){
+            $this->post_start = 0;
+        }
     }
 
     public function getConnection(){
@@ -143,7 +156,7 @@ class pageConstructor {
     public function buildHeader(){
         switch($this->mode){
 
-            case 'viewpost':?>
+            case 'viewpost': ?>
             <!-- Post Page Header -->
             <header class="intro-header" style="background-image: url('<?php echo $this->postDetails['backgroundimage'];?>')">
                 <div class="container">
@@ -152,7 +165,7 @@ class pageConstructor {
                             <div class="post-heading">
                                 <h1><?php echo $this->postDetails['headline'];?></h1>
                                 <h2 class="subheading"><?php echo $this->postDetails['subtitle'];?></h2>
-                                <span class="meta">Posted by <a href="?author=<?php echo $this->postDetails['alias'];?>"><?php echo $this->postDetails['alias'];?></a> on <?php echo $this->postDetails['date'];?></p></span>
+                                <span class="meta">Posted by <a href="?author=<?php echo $this->postDetails['alias'];?>"><?php echo $this->postDetails['alias'];?></a> on <?php echo date('l, jS F Y',strtotime($this->postDetails['date']));?></p></span>
                             </div>
                         </div>
                     </div>
@@ -202,7 +215,9 @@ class pageConstructor {
             <?php
             break;
 
-            default: ?>
+            default:
+            $this->setPageOffsets(); //sets the start and end for the post query limits.
+            ?>
             <!-- Blog Page Header -->
             <header class="intro-header" style="background-image: url('img/home-bg.jpg')">
                 <div class="container">
@@ -240,7 +255,7 @@ class pageConstructor {
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <p>Father, husband, employee, technologist, cyclist, occasionally asleep.</p>
+                    <p>Father, husband, employee, technologist, cyclist, occasionally asleep, often lost, always around.</p>
                 </div>
             </div>
         </div>
@@ -252,10 +267,7 @@ class pageConstructor {
             <div class="container">
                 <div class="row">
                     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                        <p>Want to get in touch with me? Fill out the form below to send me a message and I will try to get back to you within 24 hours!</p>
-                        <!-- Contact Form - Enter your email address on line 19 of the mail/contact_me.php file to make this form work. -->
-                        <!-- WARNING: Some web hosts do not allow emails to be sent through forms to common mail hosts like Gmail or Yahoo. It's recommended that you use a private domain email address! -->
-                        <!-- NOTE: To use the contact form, your site must be on a live web host with PHP! The form will not work locally! -->
+                        <p>Want to get in touch with me? Fill out the form below to send me a message and I will try to get back to you!</p>
                         <form name="sentMessage" id="contactForm" novalidate>
                             <div class="row control-group">
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
@@ -268,13 +280,6 @@ class pageConstructor {
                                 <div class="form-group col-xs-12 floating-label-form-group controls">
                                     <label>Email Address</label>
                                     <input type="email" class="form-control" placeholder="Email Address" id="email" required data-validation-required-message="Please enter your email address.">
-                                    <p class="help-block text-danger"></p>
-                                </div>
-                            </div>
-                            <div class="row control-group">
-                                <div class="form-group col-xs-12 floating-label-form-group controls">
-                                    <label>Phone Number</label>
-                                    <input type="tel" class="form-control" placeholder="Phone Number" id="phone" required data-validation-required-message="Please enter your phone number.">
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
@@ -334,7 +339,14 @@ class pageConstructor {
                                     <p class="help-block text-danger"></p>
                                 </div>
                             </div>
-                            <br>
+                              <div class="row control-group">
+                                  <div class="form-group col-xs-12 floating-label-form-group controls">
+                                      <label>Publish Date</label>
+                                      <input type="date" class="form-control" placeholder="eg. 12 January 2016" name="date" id="date" required data-validation-required-message="Please enter a publish date.">
+                                      <p class="help-block text-danger"></p>
+                                  </div>
+                              </div>
+                              <br>
                             <div id="success"></div>
                             <div class="row">
                                 <div class="form-group col-xs-12">
@@ -351,13 +363,21 @@ class pageConstructor {
         break;
 
         default:
+
     ?>
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                         <?php
-                            $sql = 'SELECT p.id, p.headline, p.subtitle, p.`date`, u.alias  from posts p INNER JOIN users u ON p.userid = u.id WHERE p.published=TRUE ORDER by "date"';
+                            //get the page count
+                            $sql = 'SELECT p.id, p.headline, p.subtitle, p.`date`, u.alias  from posts p INNER JOIN users u ON p.userid = u.id WHERE p.published=TRUE ORDER by p.`date` DESC ';
                             $result = mysqli_query($this->db,$sql);
+                            $this->page_limit = mysqli_num_rows($result)/$this->posts_per_page;
+
+                            //now get the summaries for the posts falling into this page's range.
+                            $sql .= ' LIMIT ' . $this->post_start . ',' . $this->posts_per_page . '';
+                            $result = mysqli_query($this->db,$sql);
+
                             while($row = mysqli_fetch_array($result)){
                             ?>
 
@@ -370,7 +390,7 @@ class pageConstructor {
                                 <?php echo $row['subtitle'];?>
                             </h3>
                         </a>
-                        <p class="post-meta">Posted by <a href="?author=<?php echo $row['alias'];?>"><?php echo $row['alias'];?></a> on <?php echo $row['date'];?></p>
+                        <p class="post-meta">Posted by <a href="?author=<?php echo $row['alias'];?>"><?php echo $row['alias'];?></a> on <?php echo date('l, jS F Y',strtotime($row['date']));?></p>
                     </div>
                                 <hr>
 
@@ -380,9 +400,16 @@ class pageConstructor {
 
                     <!-- Pager -->
                     <ul class="pager">
-                        <li class="next">
-                            <a href="#">Older Posts &rarr;</a>
+                        <?php if($this->page > 1){?>
+                        <li class="prev">
+                            <a href="index.php?page=<?php echo $this->page-1;?>">&larr; Newer Posts</a>
                         </li>
+                        <?php }
+                        if($this->page < $this->page_limit){ ?>
+                        <li class="next">
+                            <a href="index.php?page=<?php echo $this->page+1;?>">Older Posts &rarr;</a>
+                        </li>
+                        <?php }?>
                     </ul>
                 </div>
             </div>
@@ -621,3 +648,4 @@ function debugOut($msg,$debug){
         echo PHP_EOL . $msg;
     }
 }
+
