@@ -490,7 +490,7 @@ class pageConstructor {
         <script src="js/custom.js"></script>
 
         <?php
-        if($this->loggedIn){?>
+        if($this->loggedIn && $this->mode == 'viewpost'){?>
             <!-- include codemirror for inline source view -->
             <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/codemirror.css">
             <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.20.0/theme/monokai.css">
@@ -502,7 +502,7 @@ class pageConstructor {
             <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.2/summernote.css" rel="stylesheet">
             <script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.2/summernote.js"></script>
 
-        <script>
+            <script>
             $(document).ready(function(){
 
 
