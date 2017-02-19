@@ -6257,6 +6257,8 @@
         };
     };
 
+
+    /* over ride the summernote video dialog so that it uses the correct classes */
     var VideoDialog = function (context) {
         var self = this;
         var ui = $.summernote.ui;
@@ -6327,10 +6329,12 @@
             var $video;
             if (ytMatch && ytMatch[1].length === 11) {
                 var youtubeId = ytMatch[1];
-                $video = $('<iframe>')
-                    .attr('frameborder', 0)
+                var inners = $('<iframe>')
+                    .addClass('embed-responsive-item')
                     .attr('src', '//www.youtube.com/embed/' + youtubeId)
-                    .attr('width', '640').attr('height', '360');
+                $video = $('<div class="embed-responsive embed-responsive-16by9">').append(inners);
+
+                console.log('ran custom embed');
             } else if (igMatch && igMatch[0].length) {
                 $video = $('<iframe>')
                     .attr('frameborder', 0)
