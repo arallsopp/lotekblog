@@ -579,7 +579,7 @@ class pageConstructor {
                             ['font', ['style','bold', 'italic', 'clear']],
                             ['para', ['ul', 'paragraph']],
                             ['table', ['table']],
-                            ['insert', ['link', 'picture']]
+                            ['insert', ['link', 'picture','video']]
                         ]
                     },
                     callbacks: {
