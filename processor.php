@@ -44,6 +44,10 @@ switch($_POST['mode']){
         break;
 
     case 'createpost':
+    case 'amendpost':
+
+        $creating = $_POST['mode'] == 'createpost';
+
         $conn = $pageConstructor->getConnection();
 
         $headline = mysqli_real_escape_string($conn,$_POST['headline']);
@@ -51,17 +55,25 @@ switch($_POST['mode']){
         $content  = mysqli_real_escape_string($conn,$_POST['content']);
         $date = date('Y-m-d H:i:s',strtotime($_POST['date']));
 
-        $obj=saveUploadedImage();
+        if($creating) { //todo: make this work for editpost also
+            $obj = saveUploadedImage();
 
-        if($obj !== null && array_key_exists('filepath',$obj)){
-            $backgroundimage = $obj['filepath'];
-        }else{
-            $backgroundimage = 'img/post-bg.jpg';
+            if ($obj !== null && array_key_exists('filepath', $obj)) {
+                $backgroundimage = $obj['filepath'];
+            } else {
+                $backgroundimage = 'img/post-bg.jpg';
+            }
         }
         $published = 1;
 
-        $sql = 'INSERT INTO posts (headline,date,subtitle,userid,published)
-                VALUES ("' . $headline . '", "' . $date . '", "' . $subtitle . '","' . $pageConstructor->getUserID() . '",' . $published .')';
+        if($creating) {
+            $sql = 'INSERT INTO posts (headline,date,subtitle,userid,published)
+                VALUES ("' . $headline . '", "' . $date . '", "' . $subtitle . '","' . $pageConstructor->getUserID() . '",' . $published . ')';
+        }else{
+            $sql = 'INSERT INTO posts (headline,date,subtitle,userid,published)
+                VALUES ("' . $headline . '", "' . $date . '", "' . $subtitle . '","' . $pageConstructor->getUserID() . '",' . $published . ')';
+            die('todo: you need to pass the id to this processor and you need to use it to update the query.');
+        }
 
         if ($conn->query($sql) === TRUE) {
 
