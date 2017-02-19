@@ -73,7 +73,8 @@
                             $('#success > .alert-' + classtype).append('</div>');
 
                             if(obj.validated){
-                                window.location.href = window.location.href;
+                                //reload the page. You're logged in now.
+                                location.reload();
                             }
                         },
                         error: function(ret) {

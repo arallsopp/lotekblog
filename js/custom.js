@@ -24,7 +24,8 @@ $('document').ready(function() {
                 mode: "logout"
             },
             success: function (html) {
-                window.location.href = window.location.href;
+                //reload
+                location.reload();
             },
             error: function () {
                 console.log('error!');
@@ -33,4 +34,4 @@ $('document').ready(function() {
     })
 
 
-})
+});

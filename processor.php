@@ -123,6 +123,8 @@ switch($_POST['mode']){
 echo json_encode($obj);
 
 function saveUploadedImage(){
+    $obj=array('uploaded' => false);
+
     if (isset($_FILES['file']['name'])) {
         if (!$_FILES['file']['error']) {
             $name = md5(rand(100, 200));
@@ -142,6 +144,6 @@ function saveUploadedImage(){
             $obj = array('uploaded' => false,
                 'error' => $_FILES['file']['error']);
         }
-        return $obj;
     }
+    return $obj;
 }
