@@ -47,7 +47,7 @@ class pageConstructor {
 
         debugOut('Using mode: ' . $this->mode,$debug);
 
-        if ($this->mode=='viewpost' && isset($_GET['id'])){
+        if (isset($_GET['id']) && ($this->mode=='viewpost' || $this->mode='amend-post')){
             $sql = 'SELECT * from posts p INNER JOIN users u ON p.userid = u.id INNER JOIN postdetails d ON p.id = d.postid WHERE p.id="' . intval($_GET['id']) . '" AND published = TRUE LIMIT 1';
             $result = mysqli_query($this->db,$sql);
             $this->postDetails = mysqli_fetch_array($result);
@@ -140,11 +140,25 @@ class pageConstructor {
                         <li>
                             <a href="index.php">Home</a>
                         </li>
-                        <?php if($this->loggedIn){ ?>
-                            <li>
-                                <a href="index.php?mode=admin">Administer</a>
-                            </li>
-                        <?php } ?>
+                        <?php if($this->loggedIn){
+                            switch($this->mode) {
+                                case 'viewpost':
+                                    ?>
+                                    <li>
+                                        <a href="index.php?mode=amend-post&id=<?php echo $_GET['id'];?>">Amend Post</a>
+                                    </li>
+                                    <?php break;
+                                case 'home': ?>
+                                    <li>
+                                        <a href="index.php?mode=create-post">Create Post</a>
+                                    </li>
+                                    <?php break;
+
+                                default:
+                                    //no other modes required.
+
+                            }
+                        } ?>
                         <li>
                             <a href="index.php?mode=about">About</a>
                         </li>
@@ -314,7 +328,7 @@ class pageConstructor {
             <hr><?php
         break;
 
-        case 'admin':?>
+        case 'create-post':?>
             <div class="container">
                 <div class="row">
                     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
@@ -370,6 +384,64 @@ class pageConstructor {
 
             <hr><?php
         break;
+
+        case 'amend-post':?>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                        <p>Amend Post</p>
+                          <form name="amendPost" id="amendPost" method="post" action="processor.php" enctype="multipart/form-data" novalidate>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Headline</label>
+                                    <input type="text" value="<?php echo $this->postDetails['headline'];?>" class="form-control" placeholder="Headline" name="headline" id="headline" required data-validation-required-message="Please enter a headline for this post.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Subtitle</label>
+                                    <input type="text" value="<?php echo $this->postDetails['subtitle'];?>" class="form-control" placeholder="Subtitle" name="subtitle" id="subtitle" required data-validation-required-message="Please enter a subtitle for this post.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Background Image</label>
+                                    <input type="file" class="form-control" placeholder="Background Image" name="file" id="file" required data-validation-required-message="Please enter a background image.">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                            <div class="row control-group">
+                                <div class="form-group col-xs-12 floating-label-form-group controls">
+                                    <label>Content</label>
+                                    <textarea rows="5" class="form-control" placeholder="Content" name="content" id="content" required data-validation-required-message="Please enter some content for this post."><?php echo $this->postDetails['bodycontent'];?></textarea>
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                            </div>
+                              <div class="row control-group">
+                                  <div class="form-group col-xs-12 floating-label-form-group controls">
+                                      <label>Publish Date</label>
+                                      <input type="date" value="<?php echo date('Y-m-d',strtotime($this->postDetails['date']));?>" class="form-control" placeholder="eg. 12 January 2016" name="date" id="date" required data-validation-required-message="Please enter a publish date.">
+                                      <p class="help-block text-danger"></p>
+                                  </div>
+                              </div>
+                              <br>
+                            <div id="success"></div>
+                            <div class="row">
+                                <div class="form-group col-xs-12">
+                                    <input type="hidden" name="mode" value="amendpost"/>
+                                    <button type="submit" class="btn btn-default">Amend Post</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <hr><?php
+        break;
+
 
         default:
 
